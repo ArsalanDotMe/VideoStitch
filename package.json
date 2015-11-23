@@ -6,9 +6,14 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "homepage": "https://github.com/ArsalanDotMe/VideoStitch",
   "keywords": ["ffmpeg", "video", "cut", "merge", "edit", "overlay"],
-  "author": "Arsalan Ahmad",
+  "author": "Arsalan Ahmad <contact@arsalan.me>",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/ArsalanDotMe/VideoStitch.git"
+  },
   "dependencies": {
     "file-extension": "^2.0.1",
     "lodash": "^3.10.1",
