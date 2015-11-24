@@ -9,7 +9,6 @@ A node module that performs cutting, clips extraction, merging on videos using f
 let videoStitch = require('video-stitch');
 
 let videoMerge = videoStitch.merge;
-let metadata = require('./metadata.json');
 
 videoMerge()
   .original({
