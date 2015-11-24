@@ -1,6 +1,6 @@
 {
   "name": "video-stitch",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Stitches video clips on top of another clip using ffmpeg",
   "main": "index.js",
   "scripts": {
