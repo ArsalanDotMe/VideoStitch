@@ -10,9 +10,7 @@ let util = require('util');
 test('Video Stitch Module', (t) => {
   let merger = videoStitch.merge;
   t.plan(1);
-  merger({
-    silent: true,
-  })
+  merger()
     .original({
       duration: 30000,
       startTime: 0,
