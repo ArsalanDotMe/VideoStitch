@@ -9,8 +9,10 @@ let util = require('util');
 
 test('Video Stitch Module', (t) => {
   let merger = videoStitch.merge;
-
-  merger()
+  t.plan(1);
+  merger({
+    silent: true,
+  })
     .original({
       duration: 30000,
       startTime: 0,
@@ -23,7 +25,7 @@ test('Video Stitch Module', (t) => {
         fileName: path.join(__dirname, 'assets', 'tailor-5-10.mp4'),
       },
       {
-        startTime: 5000,
+        startTime: 20000,
         duration: 5000,
         fileName: path.join(__dirname, 'assets', 'tailor-20-25.mp4'),
       }

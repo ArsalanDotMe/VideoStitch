@@ -22,6 +22,7 @@
     "url": "git://github.com/ArsalanDotMe/VideoStitch.git"
   },
   "dependencies": {
+    "bluebird": "^3.0.6",
     "file-extension": "^2.0.1",
     "lodash": "^3.10.1",
     "moment": "^2.10.6",
