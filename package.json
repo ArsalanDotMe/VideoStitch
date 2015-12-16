@@ -28,5 +28,8 @@
     "moment-duration-format": "^1.3.0",
     "shelljs": "^0.5.3",
     "tmp": "0.0.28"
+  },
+  "devDependencies": {
+    "tape": "^4.2.2"
   }
 }
