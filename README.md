@@ -91,19 +91,13 @@ videoConcat({
   })
   .clips([
     {
-      "startTime": "hh:mm:ss",
-      "fileName": "FILENAME",
-      "duration": "hh:mm:ss"
+      "fileName": "FILENAME"
     },
     {
-      "startTime": "hh:mm:ss",
-      "fileName": "FILENAME",
-      "duration": "hh:mm:ss"
+      "fileName": "FILENAME"
     },
     {
-      "startTime": "hh:mm:ss",
-      "fileName": "FILENAME",
-      "duration": "hh:mm:ss"
+      "fileName": "FILENAME"
     }
   ])
   .output("myfilename") //optional absolute file name for output file
