@@ -1,8 +1,16 @@
 # VideoStitch
 A node module that performs cutting, clips extraction, merging on videos using ffpmeg.
 
+# Requirements
+This module is tested against **FFMPEG 3.x** only. Later versions should work though but are untested at this point. 
+Please test and report your findings. 
+
+Note that ffmpeg executable must be in your PATH for this module to work.
+
 # Video Merge Usage
 Video merge overwrites given clips on top of an original video and outputs the final video.
+
+
 
 ```javascript
 'use strict';
