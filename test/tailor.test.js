@@ -37,3 +37,30 @@ test('Video Stitch Module', (t) => {
       t.fail(util.inspect(err));
     });
 })
+
+
+test('Video Stitch Concat Module', (t) => {
+  let videoConcat = videoStitch.concat;
+  t.plan(1);
+  videoConcat({
+    silent: false,
+    overwrite: true
+  })
+  .clips([
+    {
+      fileName: path.join(__dirname, 'assets', 'tailor-5-10.mp4'),
+    },
+    {
+      fileName: path.join(__dirname, 'assets', 'tailor-20-25.mp4'),
+    }
+  ])
+  .output(path.join(__dirname, 'assets', 'concated_video_test_output.mp4'))
+  .concat()
+  .then((outputFileName) => {
+    console.log('outputFileName: ', outputFileName);
+    t.pass(outputFileName);
+  })
+  .catch(err => {
+    t.fail(util.inspect(err));
+  });
+})
