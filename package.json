@@ -4,7 +4,7 @@
   "description": "Stitches video clips on top of another clip using ffmpeg",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "tape test/*.test.js"
   },
   "homepage": "https://github.com/ArsalanDotMe/VideoStitch",
   "keywords": [
