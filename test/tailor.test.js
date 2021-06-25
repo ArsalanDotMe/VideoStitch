@@ -6,12 +6,14 @@ let path = require('path');
 let videoStitch = require('../index');
 let util = require('util');
 let shelljs = require('shelljs');
-
+const ffmpeg = require('ffmpeg-static')
 
 test('Video Stitch Module', (t) => {
   let merger = videoStitch.merge;
   t.plan(1);
-  merger()
+  merger({
+    ffmpeg_path:ffmpeg
+  })
     .original({
       duration: 30000,
       startTime: 0,
@@ -45,7 +47,8 @@ test('Video Stitch Concat Module', (t) => {
   t.plan(2);
   videoConcat({
     silent: false,
-    overwrite: true
+    overwrite: true,
+    ffmpeg_path:ffmpeg
   })
   .clips([
     {
@@ -74,7 +77,8 @@ test('Video Stitch Concat Module - spaces in filepath', (t) => {
   t.plan(2);
   videoConcat({
     silent: false,
-    overwrite: true
+    overwrite: true,
+    ffmpeg_path:ffmpeg
   })
   .clips([
     {
