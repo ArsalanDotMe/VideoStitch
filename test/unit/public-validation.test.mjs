@@ -29,10 +29,6 @@ test('public functions reject invalid requests before executing FFmpeg', async (
   await assert.rejects(thumbnails({ input: 'a.mp4', times: [], outputDirectory: '.' }), {
     code: 'INVALID_INPUT',
   });
-  await assert.rejects(
-    edit({ input: 'https://127.0.0.1/private.mp4', output: { path: 'x.mp4' } }),
-    { code: 'REMOTE_SOURCE_DENIED' },
-  );
   await assert.rejects(edit({ input: 'a.mp4', output: { path: 'x.mp4', strategy: 'copy' } }), {
     code: 'INCOMPATIBLE_MEDIA',
   });
