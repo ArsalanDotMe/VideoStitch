@@ -3,4 +3,3 @@ test/assets/concated_video_test_output.mp4
 coverage/
 dist/
 *.tgz
-.benchmark-output/

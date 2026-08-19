@@ -16,7 +16,6 @@
   "files": [
     "dist",
     "README.md",
-    "CHANGELOG.md",
     "LICENSE"
   ],
   "scripts": {
@@ -32,13 +31,11 @@
     "test:coverage": "npm run build && c8 --all --include 'dist/esm/**/*.js' --exclude 'dist/esm/index.js' --exclude 'dist/esm/types.js' --reporter=text --reporter=lcov --check-coverage --lines 90 --functions 90 --statements 90 --branches 85 node --test test/unit/*.test.mjs test/integration/*.test.mjs",
     "test:package": "npm run build && node scripts/test-package.mjs",
     "test": "npm run test:coverage && npm run test:package",
-    "audit": "node scripts/audit.mjs",
+    "audit": "npm audit --audit-level=high",
     "pack:check:built": "node scripts/check-package.mjs",
     "pack:check": "npm run build && node scripts/check-package.mjs",
-    "benchmark": "npm run build && node benchmark/run.mjs",
     "verify": "npm run lint && npm run format:check && npm run typecheck && npm test && npm run pack:check && npm run audit",
-    "verify:release": "npm run lint && npm run format:check && npm run typecheck && npm run build && npm run test:coverage:built && npm run pack:check:built && npm run audit",
-    "release:prepare": "node scripts/prepare-release.mjs"
+    "verify:release": "npm run lint && npm run format:check && npm run typecheck && npm run build && npm run test:coverage:built && npm run pack:check:built && npm run audit"
   },
   "engines": {
     "node": ">=22"

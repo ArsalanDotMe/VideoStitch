@@ -10,7 +10,7 @@ await mkdir(cache, { recursive: true });
 const { stdout } = await exec('npm', ['pack', '--dry-run', '--json', '--cache', cache]);
 const [pack] = JSON.parse(stdout);
 if (!pack) throw new Error('npm pack did not report a package');
-const forbidden = pack.files.filter(({ path }) => /^(src|test|benchmark|scripts)\//u.test(path));
+const forbidden = pack.files.filter(({ path }) => /^(src|test|scripts)\//u.test(path));
 if (forbidden.length > 0) {
   throw new Error(
     `Forbidden files would be published: ${forbidden.map(({ path }) => path).join(', ')}`,

@@ -52,8 +52,9 @@ jobs:
           mkdir release-assets
           npm pack --json --pack-destination release-assets > pack.json
           filename="$(node -p "JSON.parse(require('fs').readFileSync('pack.json'))[0].filename")"
+          integrity="$(node -p "JSON.parse(require('fs').readFileSync('pack.json'))[0].integrity")"
           echo "filename=$filename" >> "$GITHUB_OUTPUT"
-          node scripts/release-notes.mjs "${{ steps.release.outputs.version }}" > release-assets/RELEASE_NOTES.md
+          echo "integrity=$integrity" >> "$GITHUB_OUTPUT"
           (cd release-assets && sha256sum "$filename" > SHA256SUMS.txt)
           npm sbom --sbom-format cyclonedx > release-assets/SBOM.cdx.json
       - name: Test the exact release tarball
@@ -71,7 +72,7 @@ jobs:
         run: |
           tag="${{ steps.release.outputs.tag }}"
           if ! gh release view "$tag" >/dev/null 2>&1; then
-            args=("$tag" --target "${{ github.event.pull_request.merge_commit_sha }}" --draft --title "$tag" --notes-file release-assets/RELEASE_NOTES.md)
+            args=("$tag" --target "${{ github.event.pull_request.merge_commit_sha }}" --draft --title "$tag" --generate-notes)
             if [[ "${{ steps.release.outputs.prerelease }}" == true ]]; then args+=(--prerelease); fi
             gh release create "${args[@]}"
           fi
@@ -80,7 +81,7 @@ jobs:
           PACKAGE: release-assets/${{ steps.pack.outputs.filename }}
         run: |
           version="${{ steps.release.outputs.version }}"
-          expected="$(node scripts/tarball-integrity.mjs "$PACKAGE")"
+          expected="${{ steps.pack.outputs.integrity }}"
           if existing="$(npm view "video-stitch@$version" dist.integrity 2>/dev/null)"; then
             test "$existing" = "$expected"
           else

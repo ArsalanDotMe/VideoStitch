@@ -60,7 +60,7 @@ const { concat } = require('video-stitch');
 - `replaceSegments(request, options?)` replaces non-overlapping base-video intervals while preserving the base timeline duration.
 - `thumbnails(request, options?)` extracts one or many PNG/JPEG frames in one FFmpeg process.
 
-The complete contracts and examples are in the [API reference](docs/API.md).
+Complete request and option contracts are included in the bundled TypeScript declarations.
 
 ## Encoding behavior
 
@@ -121,7 +121,7 @@ npm ci
 npm run verify
 ```
 
-Tests generate deterministic media with FFmpeg. No binary fixtures are included in the published package. See [CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md), and [docs/RELEASING.md](docs/RELEASING.md).
+Tests generate deterministic media with FFmpeg. No binary fixtures are included in the published package. Release maintainers should also read [docs/RELEASING.md](docs/RELEASING.md).
 
 ## License
 
