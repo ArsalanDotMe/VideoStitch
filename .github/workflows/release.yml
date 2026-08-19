@@ -51,8 +51,8 @@ jobs:
         run: |
           mkdir release-assets
           npm pack --json --pack-destination release-assets > pack.json
-          filename="$(node -p "JSON.parse(require('fs').readFileSync('pack.json'))[0].filename")"
-          integrity="$(node -p "JSON.parse(require('fs').readFileSync('pack.json'))[0].integrity")"
+          filename="$(node -p "const result=JSON.parse(require('fs').readFileSync('pack.json'));(Array.isArray(result)?result[0]:Object.values(result)[0]).filename")"
+          integrity="$(node -p "const result=JSON.parse(require('fs').readFileSync('pack.json'));(Array.isArray(result)?result[0]:Object.values(result)[0]).integrity")"
           echo "filename=$filename" >> "$GITHUB_OUTPUT"
           echo "integrity=$integrity" >> "$GITHUB_OUTPUT"
           (cd release-assets && sha256sum "$filename" > SHA256SUMS.txt)

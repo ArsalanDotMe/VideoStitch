@@ -8,7 +8,8 @@ const exec = promisify(execFile);
 const cache = join(tmpdir(), 'video-stitch-npm-cache');
 await mkdir(cache, { recursive: true });
 const { stdout } = await exec('npm', ['pack', '--dry-run', '--json', '--cache', cache]);
-const [pack] = JSON.parse(stdout);
+const packResult = JSON.parse(stdout);
+const pack = Array.isArray(packResult) ? packResult[0] : Object.values(packResult)[0];
 if (!pack) throw new Error('npm pack did not report a package');
 const forbidden = pack.files.filter(({ path }) => /^(src|test|scripts)\//u.test(path));
 if (forbidden.length > 0) {
