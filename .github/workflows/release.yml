@@ -78,7 +78,7 @@ jobs:
           fi
       - name: Publish exact tarball to npm or verify an idempotent rerun
         env:
-          PACKAGE: release-assets/${{ steps.pack.outputs.filename }}
+          PACKAGE: ./release-assets/${{ steps.pack.outputs.filename }}
         run: |
           version="${{ steps.release.outputs.version }}"
           expected="${{ steps.pack.outputs.integrity }}"
