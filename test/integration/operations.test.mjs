@@ -34,7 +34,7 @@ async function makeFixture(path, color, frequency, duration = 2) {
   ]);
 }
 
-test('real FFmpeg editing workflows produce semantically valid media', async (t) => {
+test('real FFmpeg workflows produce expected output metadata', async (t) => {
   const directory = await mkdtemp(join(tmpdir(), 'video-stitch-integration-'));
   t.after(() => rm(directory, { force: true, recursive: true }));
   const red = join(directory, 'red clip.mp4');

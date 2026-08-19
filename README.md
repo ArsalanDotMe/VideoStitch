@@ -121,7 +121,7 @@ npm ci
 npm run verify
 ```
 
-Tests generate deterministic media with FFmpeg. No binary fixtures are included in the published package. Release maintainers should also read [docs/RELEASING.md](docs/RELEASING.md).
+Integration tests generate deterministic H.264/AAC clips and an image overlay from FFmpeg test sources in a temporary directory. They exercise each public operation with real FFmpeg processes and verify output metadata; they do not inspect pixels or audio samples. No binary fixtures are stored in Git or included in the package. Release maintainers should also read [docs/RELEASING.md](docs/RELEASING.md).
 
 ## License
 

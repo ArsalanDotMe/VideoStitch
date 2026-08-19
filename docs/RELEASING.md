@@ -4,7 +4,7 @@ Releases are automatic after a specially labelled release PR is merged. Merging 
 
 ## One-time repository setup
 
-1. Protect `master` and require the CI and security checks.
+1. Protect `master` and require the CI checks.
 2. Restrict merges and the `release` label to maintainers.
 3. Configure npm trusted publishing for this repository and `.github/workflows/release.yml`, allowing `npm publish`.
 4. Enable GitHub immutable releases.
