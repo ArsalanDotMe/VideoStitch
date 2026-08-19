@@ -1,6 +1,6 @@
 {
   "name": "video-stitch",
-  "version": "2.0.0-beta.0",
+  "version": "2.0.0-beta.1",
   "description": "Type-safe, secure video editing for Node.js powered by FFmpeg",
   "type": "module",
   "main": "./dist/cjs/index.js",
