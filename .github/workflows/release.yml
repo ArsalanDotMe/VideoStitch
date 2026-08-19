@@ -1,0 +1,115 @@
+name: Publish release
+
+on:
+  pull_request:
+    branches: [master]
+    types: [closed]
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  publish:
+    if: >-
+      github.event.pull_request.merged == true &&
+      startsWith(github.event.pull_request.head.ref, 'release/v') &&
+      contains(github.event.pull_request.labels.*.name, 'release')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+      - run: npm install --global npm@12.0.2
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - run: npm ci --ignore-scripts
+      - name: Validate release identity
+        id: release
+        env:
+          HEAD_BRANCH: ${{ github.event.pull_request.head.ref }}
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          test "$HEAD_BRANCH" = "release/v$version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=v$version" >> "$GITHUB_OUTPUT"
+          if [[ "$version" == *-* ]]; then
+            echo "dist_tag=next" >> "$GITHUB_OUTPUT"
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "dist_tag=latest" >> "$GITHUB_OUTPUT"
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          fi
+      - run: npm run verify:release
+      - name: Build immutable release assets
+        id: pack
+        run: |
+          mkdir release-assets
+          npm pack --json --pack-destination release-assets > pack.json
+          filename="$(node -p "JSON.parse(require('fs').readFileSync('pack.json'))[0].filename")"
+          echo "filename=$filename" >> "$GITHUB_OUTPUT"
+          node scripts/release-notes.mjs "${{ steps.release.outputs.version }}" > release-assets/RELEASE_NOTES.md
+          (cd release-assets && sha256sum "$filename" > SHA256SUMS.txt)
+          npm sbom --sbom-format cyclonedx > release-assets/SBOM.cdx.json
+      - name: Test the exact release tarball
+        run: node scripts/test-package.mjs "release-assets/${{ steps.pack.outputs.filename }}"
+      - name: Validate or reserve the release tag
+        run: |
+          tag="${{ steps.release.outputs.tag }}"
+          merge_commit="${{ github.event.pull_request.merge_commit_sha }}"
+          if git show-ref --verify --quiet "refs/tags/$tag"; then
+            test "$(git rev-list -n 1 "$tag")" = "$merge_commit"
+          fi
+      - name: Create or reuse draft GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="${{ steps.release.outputs.tag }}"
+          if ! gh release view "$tag" >/dev/null 2>&1; then
+            args=("$tag" --target "${{ github.event.pull_request.merge_commit_sha }}" --draft --title "$tag" --notes-file release-assets/RELEASE_NOTES.md)
+            if [[ "${{ steps.release.outputs.prerelease }}" == true ]]; then args+=(--prerelease); fi
+            gh release create "${args[@]}"
+          fi
+      - name: Publish exact tarball to npm or verify an idempotent rerun
+        env:
+          PACKAGE: release-assets/${{ steps.pack.outputs.filename }}
+        run: |
+          version="${{ steps.release.outputs.version }}"
+          expected="$(node scripts/tarball-integrity.mjs "$PACKAGE")"
+          if existing="$(npm view "video-stitch@$version" dist.integrity 2>/dev/null)"; then
+            test "$existing" = "$expected"
+          else
+            npm publish "$PACKAGE" --tag "${{ steps.release.outputs.dist_tag }}"
+          fi
+          for attempt in 1 2 3 4 5; do
+            actual="$(npm view "video-stitch@$version" dist.integrity 2>/dev/null || true)"
+            [[ "$actual" == "$expected" ]] && break
+            sleep 5
+          done
+          test "$actual" = "$expected"
+      - name: Verify registry installation and publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          consumer="$(mktemp -d)"
+          npm install --prefix "$consumer" --ignore-scripts --no-audit --no-fund "video-stitch@${{ steps.release.outputs.version }}"
+          node -e "const api=require('$consumer/node_modules/video-stitch');if(typeof api.probe!=='function')process.exit(1)"
+          tag="${{ steps.release.outputs.tag }}"
+          is_draft="$(gh release view "$tag" --json isDraft --jq .isDraft)"
+          if [[ "$is_draft" == true ]]; then
+            gh release upload "$tag" \
+              "release-assets/${{ steps.pack.outputs.filename }}" \
+              release-assets/SHA256SUMS.txt \
+              release-assets/SBOM.cdx.json \
+              --clobber
+            if [[ "${{ steps.release.outputs.prerelease }}" == true ]]; then
+              gh release edit "$tag" --draft=false --prerelease --latest=false
+            else
+              gh release edit "$tag" --draft=false --latest
+            fi
+          fi
