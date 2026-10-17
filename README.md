@@ -19,7 +19,9 @@ let videoStitch = require('video-stitch');
 
 let videoMerge = videoStitch.merge;
 
-videoMerge()
+videoMerge({
+  // ffmpeg_path: <path-to-ffmpeg> Optional. Otherwise it will just use ffmpeg on your $PATH
+})
   .original({
     "fileName": "FILENAME",
     "duration": "hh:mm:ss"
@@ -59,6 +61,7 @@ let videoCut = videoStitch.cut;
 
 videoCut({
     silent: true // optional. if set to false, gives detailed output on console
+    // ffmpeg_path: <path-to-ffmpeg> Optional. Otherwise it will just use ffmpeg on your $PATH
   })
   .original({
     "fileName": "FILENAME",
@@ -95,6 +98,7 @@ let videoStitch = require('video-stitch');
 let videoConcat = videoStitch.concat;
 
 videoConcat({
+    // ffmpeg_path: <path-to-ffmpeg> Optional. Otherwise it will just use ffmpeg on your $PATH
     silent: true, // optional. if set to false, gives detailed output on console
     overwrite: false // optional. by default, if file already exists, ffmpeg will ask for overwriting in console and that pause the process. if set to true, it will force overwriting. if set to false it will prevent overwriting.
   })
@@ -115,3 +119,17 @@ videoConcat({
     
   });
 ```
+
+
+## Security maintenance release 1.7.2 (candidate)
+
+Requires Node.js >=14.14 due to the patched temporary-file dependency. Use a
+currently maintained Node.js release; this candidate is tested on Node 22 and 24.
+FFmpeg runs directly without a shell. `ffmpeg_path` is an executable path, not a
+shell command. Nonzero FFmpeg exits and missing executables reject the promise.
+Concat filenames cannot contain CR, LF or NUL. Temporary concat lists are created
+exclusively with owner-only permissions and removed after FFmpeg completes.
+
+This library is not a sandbox for untrusted media. FFmpeg still has file and
+network access, including the existing concat protocol whitelist. Applications
+must control input locations and run FFmpeg with appropriate OS isolation.

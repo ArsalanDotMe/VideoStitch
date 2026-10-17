@@ -5,8 +5,12 @@ let test = require('tape');
 let path = require('path');
 let videoStitch = require('../index');
 let util = require('util');
-let shelljs = require('shelljs');
-const ffmpeg = require('ffmpeg-static')
+const { execFileSync } = require('child_process');
+const ffmpeg = 'ffmpeg';
+function duration(file) {
+ return Number(execFileSync('ffprobe', ['-v', 'error', '-show_entries',
+  'format=duration', '-of', 'default=nw=1:nk=1', file], {encoding:'utf8'}));
+}
 
 test('Video Stitch Module', (t) => {
   let merger = videoStitch.merge;
@@ -58,13 +62,13 @@ test('Video Stitch Concat Module', (t) => {
       fileName: path.join(__dirname, 'assets', 'tailor-20-25.mp4'),
     }
   ])
-  .output(path.join(__dirname, 'assets', 'concated_video_test_output.mp4'))
+  .output(path.join(__dirname, 'assets', 'concat-test-output.mp4'))
   .concat()
   .then((outputFileName) => {
     t.pass(outputFileName);
-    let input1_duration = shelljs.exec(`ffmpeg -i "${path.join(__dirname, 'assets', 'tailor-5-10.mp4')}" 2>&1 | grep "Duration"| cut -d ' ' -f 4 | sed s/,// | sed 's@\\..*@@g' | awk '{ split($1, A, ":"); split(A[3], B, "."); print 3600*A[1] + 60*A[2] + B[1] }'`, { silent: true }).output;
-    let input2_duration = shelljs.exec(`ffmpeg -i "${path.join(__dirname, 'assets', 'tailor-20-25.mp4')}" 2>&1 | grep "Duration"| cut -d ' ' -f 4 | sed s/,// | sed 's@\\..*@@g' | awk '{ split($1, A, ":"); split(A[3], B, "."); print 3600*A[1] + 60*A[2] + B[1] }'`, { silent: true }).output;
-    let output_duration = shelljs.exec(`ffmpeg -i ${outputFileName} 2>&1 | grep "Duration"| cut -d ' ' -f 4 | sed s/,// | sed 's@\\..*@@g' | awk '{ split($1, A, ":"); split(A[3], B, "."); print 3600*A[1] + 60*A[2] + B[1] }'`, { silent: true }).output;
+    let input1_duration = duration(path.join(__dirname, 'assets', 'tailor-5-10.mp4'));
+    let input2_duration = duration(path.join(__dirname, 'assets', 'tailor-20-25.mp4'));
+    let output_duration = duration(outputFileName);
     t.equal(parseInt(input1_duration) + parseInt(input2_duration), parseInt(output_duration));
   })
   .catch(err => {
@@ -88,13 +92,13 @@ test('Video Stitch Concat Module - spaces in filepath', (t) => {
       fileName: path.join(__dirname, 'assets', 'tailor-20 to 25.mp4'),
     }
   ])
-  .output(path.join(__dirname, 'assets', 'concated_video_test_output.mp4'))
+  .output(path.join(__dirname, 'assets', 'concat-spaces-test-output.mp4'))
   .concat()
   .then((outputFileName) => {
     t.pass(outputFileName);
-    let input1_duration = shelljs.exec(`ffmpeg -i "${path.join(__dirname, 'assets', 'tailor-5-10.mp4')}" 2>&1 | grep "Duration"| cut -d ' ' -f 4 | sed s/,// | sed 's@\\..*@@g' | awk '{ split($1, A, ":"); split(A[3], B, "."); print 3600*A[1] + 60*A[2] + B[1] }'`, { silent: true }).output;
-    let input2_duration = shelljs.exec(`ffmpeg -i "${path.join(__dirname, 'assets', 'tailor-20 to 25.mp4')}" 2>&1 | grep "Duration"| cut -d ' ' -f 4 | sed s/,// | sed 's@\\..*@@g' | awk '{ split($1, A, ":"); split(A[3], B, "."); print 3600*A[1] + 60*A[2] + B[1] }'`, { silent: true }).output;
-    let output_duration = shelljs.exec(`ffmpeg -i ${outputFileName} 2>&1 | grep "Duration"| cut -d ' ' -f 4 | sed s/,// | sed 's@\\..*@@g' | awk '{ split($1, A, ":"); split(A[3], B, "."); print 3600*A[1] + 60*A[2] + B[1] }'`, { silent: true }).output;
+    let input1_duration = duration(path.join(__dirname, 'assets', 'tailor-5-10.mp4'));
+    let input2_duration = duration(path.join(__dirname, 'assets', 'tailor-20 to 25.mp4'));
+    let output_duration = duration(outputFileName);
     t.equal(parseInt(input1_duration) + parseInt(input2_duration), parseInt(output_duration));
   })
   .catch(err => {
