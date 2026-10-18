@@ -9,7 +9,7 @@ import { concat, edit, probe, replaceSegments, thumbnails } from '../../dist/esm
 
 const exec = promisify(execFile);
 
-async function makeFixture(path, color, frequency, duration = 2) {
+async function makeFixture(path, color, frequency, duration = 2, frameRate = 24) {
   await exec('ffmpeg', [
     '-hide_banner',
     '-loglevel',
@@ -17,7 +17,7 @@ async function makeFixture(path, color, frequency, duration = 2) {
     '-f',
     'lavfi',
     '-i',
-    `color=c=${color}:s=160x90:r=24:d=${duration}`,
+    `color=c=${color}:s=160x90:r=${frameRate}:d=${duration}`,
     '-f',
     'lavfi',
     '-i',
@@ -84,7 +84,76 @@ test('real FFmpeg workflows produce expected output metadata', async (t) => {
     });
     const info = await probe(output);
     assert.ok(Math.abs(info.duration - 3.75) < 0.25);
+    assert.equal(info.streams.find((stream) => stream.type === 'video')?.frameRate, 24);
   });
+
+  await t.test(
+    'transitions retain source or requested CFR across multi-clip timelines',
+    async (t) => {
+      for (const scenario of [
+        { name: '25fps', rate: '25', count: 2 },
+        { name: 'fractional-fades', rate: '30000/1001', count: 3 },
+        { name: 'fractional-cut-fade', rate: '24000/1001', count: 3, cut: true },
+        { name: 'requested-rate', rate: '24', count: 3, cut: true, outputRate: 30 },
+      ]) {
+        await t.test(scenario.name, async () => {
+          const inputs = [];
+          for (let index = 0; index < scenario.count; index += 1) {
+            const source = join(directory, `${scenario.name}-${index}.mp4`);
+            await makeFixture(
+              source,
+              index % 2 === 0 ? 'red' : 'blue',
+              440,
+              2,
+              scenario.outputRate && index === 1 ? '25' : scenario.rate,
+            );
+            inputs.push({
+              source,
+              ...(index < scenario.count - 1 && !(scenario.cut && index === 0)
+                ? { transitionAfter: { type: 'crossfade', duration: 0.25 } }
+                : {}),
+            });
+          }
+          const output = join(directory, `${scenario.name}-out.mp4`);
+          await concat({
+            inputs,
+            output: {
+              path: output,
+              ...(scenario.outputRate ? { video: { frameRate: scenario.outputRate } } : {}),
+            },
+          });
+          const { stdout } = await exec('ffprobe', [
+            '-v',
+            'error',
+            '-select_streams',
+            'v:0',
+            '-count_frames',
+            '-show_entries',
+            'stream=r_frame_rate,avg_frame_rate,nb_read_frames,duration',
+            '-of',
+            'json',
+            output,
+          ]);
+          const [stream] = JSON.parse(stdout).streams;
+          t.diagnostic(`${scenario.name}: ${JSON.stringify(stream)}`);
+          const rational = scenario.outputRate
+            ? `${scenario.outputRate}/1`
+            : scenario.rate.includes('/')
+              ? scenario.rate
+              : `${scenario.rate}/1`;
+          assert.equal(stream.r_frame_rate, rational);
+          assert.equal(stream.avg_frame_rate, rational);
+          const [numerator, denominator] = rational.split('/').map(Number);
+          const fps = numerator / denominator;
+          const duration =
+            scenario.count * 2 -
+            inputs.reduce((total, input) => total + (input.transitionAfter?.duration ?? 0), 0);
+          assert.ok(Math.abs(Number(stream.duration) - duration) < 3 / fps);
+          assert.ok(Math.abs(Number(stream.nb_read_frames) - duration * fps) < 3);
+        });
+      }
+    },
+  );
 
   await t.test('edit removes time, transforms video, mixes audio, and overlays media', async () => {
     const output = join(directory, 'edited.mp4');
