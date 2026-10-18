@@ -28,13 +28,23 @@ export function createConcatFilter(
   const allHaveAudio = infos.every(
     (info) => info.streams.find((stream) => stream.type === 'audio') !== undefined,
   );
+  const hasTransitions = request.inputs.some((input) => input.transitionAfter !== undefined);
+  const frameRate =
+    request.output.video?.frameRate ??
+    infos[0]?.streams.find((stream) => stream.type === 'video')?.frameRate;
+  // FFmpeg 7.1 setpts clears frame-rate metadata; xfade requires a common CFR.
+  const output =
+    hasTransitions && frameRate !== undefined
+      ? { ...request.output, video: { ...request.output.video, frameRate } }
+      : request.output;
   infos.forEach((info, index) => {
-    filters.push(`[${index}:v:0]${videoNormalizationFilter(info, request.output)}[v${index}]`);
+    // fps changes the time base; match concat's AVTB for hard cuts before a fade.
+    const timeBase = hasTransitions ? ',settb=AVTB' : '';
+    filters.push(`[${index}:v:0]${videoNormalizationFilter(info, output)}${timeBase}[v${index}]`);
     const audio = audioNormalizationFilter(info);
     if (allHaveAudio && audio !== undefined) filters.push(`[${index}:a:0]${audio}[a${index}]`);
   });
 
-  const hasTransitions = request.inputs.some((input) => input.transitionAfter !== undefined);
   if (!hasTransitions) {
     const inputs = infos
       .map((_, index) => `[v${index}]${allHaveAudio ? `[a${index}]` : ''}`)

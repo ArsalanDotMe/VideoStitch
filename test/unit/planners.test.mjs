@@ -13,6 +13,38 @@ const media = (duration = 4, withAudio = true) => ({
   streams: withAudio ? [video, audio] : [video],
 });
 
+test('transition normalization establishes one CFR after timestamp reset and a common timebase', () => {
+  for (const frameRate of [25, 30000 / 1001]) {
+    for (const requestedRate of [undefined, 30]) {
+      const inputs = [
+        { source: 'a' },
+        { source: 'b', transitionAfter: { type: 'crossfade', duration: 0.5 } },
+        { source: 'c', transitionAfter: { type: 'fade-through-black', duration: 0.5 } },
+        { source: 'd' },
+      ];
+      const infos = inputs.map((_, index) => ({
+        ...media(),
+        streams: [{ ...video, frameRate: index === 0 ? frameRate : 24 }, audio],
+      }));
+      const { graph } = createConcatFilter(
+        { inputs, output: { path: 'out.mp4', video: { frameRate: requestedRate } } },
+        infos,
+      );
+      for (let index = 0; index < inputs.length; index += 1) {
+        const leaf = graph.split(';').find((filter) => filter.startsWith(`[${index}:v:0]`));
+        assert.ok(leaf.includes(`fps=${requestedRate ?? frameRate}`), leaf);
+        assert.ok(leaf.indexOf('fps=') > leaf.indexOf('setpts='), leaf);
+        assert.ok(leaf.lastIndexOf('settb=AVTB') > leaf.indexOf('fps='), leaf);
+      }
+    }
+  }
+  const { graph } = createConcatFilter(
+    { inputs: [{ source: 'a' }, { source: 'b' }], output: { path: 'out.mp4' } },
+    [25, 30].map((frameRate) => ({ ...media(), streams: [{ ...video, frameRate }, audio] })),
+  );
+  assert.doesNotMatch(graph, /fps=/u);
+});
+
 test('concat planner supports encoded joins, mixed hard cuts, and both transition types', () => {
   const plain = createConcatFilter(
     {
